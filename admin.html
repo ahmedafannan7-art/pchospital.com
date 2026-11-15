@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>لوحة التحكم</title>
+<style>
+:root{--bg:#f4f9fc;--s:#fff;--t:#0e2442;--m:#566882;--a:#0b8f86;--l:#dbe6ee}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1620;--s:#182231;--t:#e6ecf3;--m:#94a3b8;--a:#5eb8ae;--l:#263447}}
+*{box-sizing:border-box;margin:0}body{font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--t);padding:14px 14px 96px;max-width:760px;margin:auto;line-height:1.6}
+h1{font-size:22px;margin:8px 0 14px}h3{margin-bottom:6px}
+.box{background:var(--s);border:1px solid var(--l);border-radius:16px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:13px;color:var(--m);margin:10px 0 4px}
+input,textarea{width:100%;font:inherit;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--l);background:var(--bg);color:var(--t)}
+button,.up{font:inherit;font-weight:700;background:var(--a);color:#06201e;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;display:inline-block}
+.up{margin-top:10px;background:transparent;color:var(--a);border:1px dashed var(--a)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}
+.th{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden}.th img{width:100%;height:100%;object-fit:cover}
+.th button{position:absolute;top:4px;left:4px;width:26px;height:26px;padding:0;border-radius:50%;background:#e5484d;color:#fff}
+#bar{position:fixed;bottom:0;left:0;right:0;background:var(--s);border-top:1px solid var(--l);padding:10px 14px;display:flex;gap:12px;align-items:center;justify-content:center}
+#st{font-size:13px;color:var(--m)}.hide{display:none}
+</style></head><body>
+<div id="login" class="box" style="margin-top:60px"><h3>🔒 لوحة التحكم</h3><label>كلمة السر</label><input id="pw" type="password" autocomplete="current-password"><p id="err" style="color:#e5484d;font-size:13px"></p><br><button id="go">دخول</button></div>
+<div id="app" class="hide"><h1>⚙️ لوحة تحكم مستشفى الكمبيوتر</h1>
+<div class="box"><h3>الصفحة الرئيسية</h3><label>النص تحت العنوان (مثلاً 55 إسعاف)</label><input id="emg"><label>الجملة الرئيسية</label><textarea id="tag" rows="2"></textarea></div>
+<div class="box"><h3>التواصل</h3><label>رقم الواتساب</label><input id="wa" inputmode="tel" dir="ltr"><label>أرقام التليفون (رقم في كل سطر)</label><textarea id="ph" rows="3" dir="ltr"></textarea>
+<label>فيسبوك</label><input id="facebook" dir="ltr"><label>إنستجرام</label><input id="instagram" dir="ltr"><label>تيك توك</label><input id="tiktok" dir="ltr">
+<label>لينك ماب إيتاي البارود</label><input id="mi" dir="ltr"><label>لينك ماب رأس الحكمة</label><input id="mh" dir="ltr"></div>
+<h3 style="margin:4px 0 8px">الأقسام والصور</h3><div id="depts"></div>
+<div id="bar"><span id="st"></span><button id="save">حفظ التعديلات</button></div></div>
+<script>
+var $=function(i){return document.getElementById(i)},S,rm=[],dirty=false;
+var DEF={emg:'55 إسعاف',tag:'أي حاجة تخص الكمبيوتر متشيلش همها — بنشخّص، بنعالج، وبنرجّع جهازك زي الفل.',whatsapp:'201061004156',phones:['01061004156','01500600016','01114458909'],facebook:'https://www.facebook.com/share/1DmRbdTrMf/',instagram:'https://www.instagram.com/pchosbital/',tiktok:'https://www.tiktok.com/@c.hospital',maps:{itay:'https://maps.app.goo.gl/MTMXSWTcZw365tt19',hakma:''},depts:[
+{n:'صيانة وداتا ريكافري',t:'قسم الجراحة والعناية المركزة',d:'إصلاح الأعطال واسترجاع الملفات من الهارد والفلاشات التالفة.'},
+{n:'برامج الكاشير والمحاسبات',t:'قسم الإدارة',d:'تجهيز المحلات والمنشآت ببرامج الكاشير والحسابات والمخازن.'},
+{n:'التيار الخفيف والسمارت هوم',t:'قسم الطاقة والتحكم',d:'تأسيس شبكات وتحكم ذكي في الإضاءة والبيت.'},
+{n:'اللاب توب',t:'قسم العيادات الخارجية',d:'بيع وصيانة وتغيير شاشات وبطاريات ولوحات أم.'},
+{n:'كمبيوتر',t:'قسم التشخيص والتجميع',d:'تجميع أجهزة حسب الميزانية، تطوير وصيانة وإكسسوارات.'},
+{n:'كاميرات المراقبة',t:'قسم الأمن والمراقبة',d:'تركيب وصيانة كاميرات مع مشاهدة عن بُعد على الموبايل.'}]};
+function H(){return{'Content-Type':'application/json','x-admin':sessionStorage.ap||''}}
+async function login(){sessionStorage.ap=$('pw').value||sessionStorage.ap||'';var r=await fetch('/api/content?check=1',{method:'POST',headers:H(),body:'{}'});
+ if(!r.ok){$('err').textContent=sessionStorage.ap?'كلمة السر غلط (أو لسه ماتضافتش في Vercel)':'';sessionStorage.ap='';return}
+ var d=null;try{d=await (await fetch('/api/content',{cache:'no-store'})).json()}catch(e){}S=d||DEF;S.depts.forEach(function(x){x.photos=x.photos||[]});
+ $('login').classList.add('hide');$('app').classList.remove('hide');render()}
+function render(){
+ $('emg').value=S.emg||'';$('tag').value=S.tag||'';$('wa').value=(S.whatsapp||'').replace(/^20/,'0');$('ph').value=(S.phones||[]).join('\n');
+ ['facebook','instagram','tiktok'].forEach(function(k){$(k).value=S[k]||''});$('mi').value=(S.maps||{}).itay||'';$('mh').value=(S.maps||{}).hakma||'';
+ var h='';S.depts.forEach(function(d,k){h+='<div class="box" data-k="'+k+'"><h3>قسم '+(k+1)+'</h3><label>الاسم</label><input class="dn"><label>العنوان الصغير</label><input class="dt"><label>الوصف</label><textarea class="dd" rows="2"></textarea><div class="grid"></div><label class="up">＋ إضافة صور<input type="file" accept="image/*" multiple hidden></label></div>'});
+ $('depts').innerHTML=h;
+ document.querySelectorAll('#depts .box').forEach(function(b){var k=+b.dataset.k,d=S.depts[k];b.querySelector('.dn').value=d.n;b.querySelector('.dt').value=d.t;b.querySelector('.dd').value=d.d;grid(b,k);
+  b.querySelector('.grid').onclick=function(e){var i=e.target.dataset.i;if(i==null)return;rm.push(d.photos.splice(+i,1)[0]);dirty=true;grid(b,k)};
+  b.querySelector('input[type=file]').onchange=function(){up(k,this.files,b);this.value=''}})}
+function grid(b,k){b.querySelector('.grid').innerHTML=S.depts[k].photos.map(function(u,i){return '<div class="th"><img src="'+u+'" alt=""><button data-i="'+i+'">×</button></div>'}).join('')}
+function shrink(f){return new Promise(function(ok,no){var i=new Image(),u=URL.createObjectURL(f);i.onload=function(){var s=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.82))};i.onerror=function(){no(new Error('ملف غير صالح'))};i.src=u})}
+async function up(k,fs,b){var st=$('st');for(var f of fs){st.textContent='جاري رفع '+f.name+'…';try{var d=await shrink(f),r=await fetch('/api/upload',{method:'POST',headers:H(),body:JSON.stringify({data:d})}),j=await r.json();if(!r.ok)throw new Error(j.error);S.depts[k].photos.push(j.url);grid(b,k);dirty=true}catch(e){st.textContent='❌ فشل الرفع: '+e.message;return}}st.textContent='اترفعت. اضغط «حفظ التعديلات».'}
+function collect(){var o={emg:$('emg').value.trim(),tag:$('tag').value.trim(),whatsapp:$('wa').value.replace(/\D/g,'').replace(/^0/,'20'),phones:$('ph').value.split('\n').map(function(x){return x.replace(/\D/g,'')}).filter(Boolean),facebook:$('facebook').value.trim(),instagram:$('instagram').value.trim(),tiktok:$('tiktok').value.trim(),maps:{itay:$('mi').value.trim(),hakma:$('mh').value.trim()},depts:[]};
+ document.querySelectorAll('#depts .box').forEach(function(b,k){o.depts.push({n:b.querySelector('.dn').value.trim(),t:b.querySelector('.dt').value.trim(),d:b.querySelector('.dd').value.trim(),photos:S.depts[k].photos})});return o}
+async function save(){var st=$('st');st.textContent='جاري الحفظ…';try{var r=await fetch('/api/content',{method:'POST',headers:H(),body:JSON.stringify(collect())});if(!r.ok)throw new Error((await r.json()).error);rm.forEach(function(u){fetch('/api/upload?url='+encodeURIComponent(u),{method:'DELETE',headers:H()})});rm=[];dirty=false;st.textContent='✅ اتحفظ. بيظهر على الموقع خلال نص دقيقة.'}catch(e){st.textContent='❌ '+e.message}}
+$('go').onclick=login;$('pw').onkeydown=function(e){if(e.key==='Enter')login()};$('save').onclick=save;
+document.addEventListener('input',function(){dirty=true});addEventListener('beforeunload',function(e){if(dirty){e.preventDefault();e.returnValue=''}});
+if(sessionStorage.ap)login();
+</script></body></html>
